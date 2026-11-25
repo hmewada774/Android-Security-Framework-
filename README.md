@@ -203,7 +203,7 @@ The backend, dashboard, native Android agent scaffolding, and debug APK build ha
 
 **Hariom Mewada**
 
-- GitHub: [@hariom774](https://github.com/hariom774)
+- GitHub: [@hariom774](https://github.com/hmewada774)
 - LinkedIn: [Hariom Mewada](https://www.linkedin.com/in/hariom-mewada-cybersecurity/)
 
 ---
