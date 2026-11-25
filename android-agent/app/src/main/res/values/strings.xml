@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ASF Agent</string>
+    <string name="notification_channel_name">Security Monitoring</string>
+    <string name="notification_channel_desc">Active Security Framework Screen Capture Session</string>
+    <string name="notification_active_title">ASF Monitoring Session Active</string>
+    <string name="notification_active_text">Screen sharing is currently active with operator consent.</string>
+    <string name="action_stop">Stop Monitoring</string>
+</resources>

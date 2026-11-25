@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Security Framework — Management Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <div class="logo-group">
+            <span class="logo-badge">ASF</span>
+            <div class="logo-title">Android Security Framework</div>
+        </div>
+        <div class="header-status">
+            <div class="status-indicator">
+                <span id="connectionDot" class="status-dot"></span>
+                <span id="connectionStatusText">Connecting...</span>
+            </div>
+            <div id="operatorBadge" style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">AUTH: OPERATOR</div>
+        </div>
+    </header>
+
+    <!-- Prominent Active Security Monitoring Banner -->
+    <div id="activeSessionBanner" class="active-session-banner">
+        <div class="banner-content">
+            <div class="pulse-indicator"></div>
+            <span>ACTIVE SECURITY SESSION: Live screen and telemetry streaming from authorized Android agent.</span>
+        </div>
+        <button id="btnBannerEmergencyStop" class="btn btn-danger btn-sm">Stop Monitoring</button>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <button class="nav-item active" data-tab="tab-overview">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </button>
+            <button class="nav-item" data-tab="tab-devices">
+                <span class="nav-icon">📱</span>
+                <span>Device Management</span>
+            </button>
+            <button class="nav-item" data-tab="tab-monitoring">
+                <span class="nav-icon">🖥️</span>
+                <span>Live Monitoring</span>
+            </button>
+            <button class="nav-item" data-tab="tab-telemetry">
+                <span class="nav-icon">🔋</span>
+                <span>Device Telemetry</span>
+            </button>
+            <button class="nav-item" data-tab="tab-typing">
+                <span class="nav-icon">⌨️</span>
+                <span>Typing Lab Sandbox</span>
+            </button>
+            <button class="nav-item" data-tab="tab-events">
+                <span class="nav-icon">🛡️</span>
+                <span>Security Events</span>
+            </button>
+            <button class="nav-item" data-tab="tab-reports">
+                <span class="nav-icon">📄</span>
+                <span>Audit Reports</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- TAB 1: OVERVIEW -->
+            <section id="tab-overview" class="tab-pane active">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">System Overview</h2>
+                        <div class="section-subtitle">Real-time framework posture and authorized device telemetry summary</div>
+                    </div>
+                    <button id="btnRefreshOverview" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                </div>
+
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-label">Backend Status</div>
+                        <div class="metric-value" id="overviewBackendStatus">ONLINE</div>
+                        <div class="metric-sub" id="overviewVersion">FastAPI Framework v0.1.0</div>
+                    </div>
+                    <div class="metric-card emerald">
+                        <div class="metric-label">Total Paired Devices</div>
+                        <div class="metric-value" id="overviewTotalDevices">0</div>
+                        <div class="metric-sub">Registered in SQLite Keystore</div>
+                    </div>
+                    <div class="metric-card amber">
+                        <div class="metric-label">Connected Agents</div>
+                        <div class="metric-value" id="overviewConnectedAgents">0</div>
+                        <div class="metric-sub">Active WebSocket connections</div>
+                    </div>
+                    <div class="metric-card rose">
+                        <div class="metric-label">Active Monitoring Sessions</div>
+                        <div class="metric-value" id="overviewActiveSessions">0</div>
+                        <div class="metric-sub">MediaProjection / Telemetry</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Recent Security Events</span>
+                        <a href="#" class="btn btn-secondary btn-sm" onclick="switchTab('tab-events'); return false;">View All Events</a>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Device</th>
+                                    <th>Event Type</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overviewEventsBody">
+                                <tr>
+                                    <td colspan="5" class="empty-state">No security events recorded yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DEVICE MANAGEMENT -->
+            <section id="tab-devices" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Device Management</h2>
+                        <div class="section-subtitle">Authorize, inspect, and revoke Android agent credentials</div>
+                    </div>
+                    <button id="btnOpenPairModal" class="btn btn-primary">➕ Pair New Device</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Registered Test Devices</span>
+                        <span id="deviceListCounter" style="font-size: 0.8rem; color: var(--text-muted);">0 devices</span>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Device Name</th>
+                                    <th>Device ID</th>
+                                    <th>Model & OS</th>
+                                    <th>Authorization Status</th>
+                                    <th>Live Socket</th>
+                                    <th>Last Seen</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devicesTableBody">
+                                <tr>
+                                    <td colspan="7" class="empty-state">No devices registered. Click "Pair New Device" to initiate.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: MONITORING -->
+            <section id="tab-monitoring" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Authorized Live Monitoring</h2>
+                        <div class="section-subtitle">Screen viewer with explicit user approval and immediate operator stop control</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="btnStartMonitoring" class="btn btn-primary">▶ Request Start Stream</button>
+                        <button id="btnStopMonitoring" class="btn btn-danger">⏹ Stop Monitoring</button>
+                    </div>
+                </div>
+
+                <div class="notice-box">
+                    <strong>Explicit Consent Notice:</strong> Screen capture uses official Android <code>MediaProjection</code> APIs requiring interactive system approval on the target device. Screen streaming stops immediately when revoked or requested.
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+                    <div class="viewport-card">
+                        <div class="viewport-toolbar">
+                            <span id="viewportStatusText">STATUS: WAITING FOR AUTHORIZED STREAM</span>
+                            <span id="viewportResolutionBadge" style="font-family: var(--font-mono);">0x0 @ 0 FPS</span>
+                        </div>
+                        <canvas id="screenCanvas"></canvas>
+                        <div id="viewportPlaceholder" class="viewport-placeholder">
+                            <div class="viewport-radar"></div>
+                            <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;">Waiting for Android Agent Stream</h3>
+                            <p style="font-size: 0.85rem; max-width: 400px; margin: 0 auto;">No active frame stream. Select a connected device and request a stream, or initiate capture directly on the paired Android device.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="card">
+                            <div class="card-title">Session Controls</div>
+                            <div class="form-group">
+                                <label class="form-label">Target Paired Device</label>
+                                <select id="monitoringDeviceSelect" class="form-select">
+                                    <option value="">No paired devices available</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Active Session State</label>
+                                <div id="monitoringSessionStatusBadge" class="badge badge-stopped">STOPPED</div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                                <div><strong>Session ID:</strong> <span id="monitoringSessionId" style="font-family: var(--font-mono);">None</span></div>
+                                <div style="margin-top: 0.25rem;"><strong>Started:</strong> <span id="monitoringSessionStarted">N/A</span></div>
+                                <div style="margin-top: 0.25rem;"><strong>Ended:</strong> <span id="monitoringSessionEnded">N/A</span></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">Session History</div>
+                            <div id="monitoringHistoryList" style="font-size: 0.8rem; max-height: 200px; overflow-y: auto;">
+                                <div class="empty-state" style="padding: 1rem;">No prior sessions recorded.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: TELEMETRY -->
+            <section id="tab-telemetry" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Device Telemetry & Health</h2>
+                        <div class="section-subtitle">Battery, network connectivity, and system telemetry from authorized agents</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <label class="form-label" style="margin-bottom: 0;">Select Device:</label>
+                        <select id="telemetryDeviceSelect" class="form-select" style="width: 220px;">
+                            <option value="">No devices paired</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-label">Battery Level</div>
+                        <div class="metric-value" id="telBatteryValue">-- <span style="font-size: 1rem; font-weight: normal;">%</span></div>
+                        <div class="metric-sub" id="telChargingValue">Unavailable</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Network Interface</div>
+                        <div class="metric-value" id="telNetworkValue" style="font-size: 1.3rem;">--</div>
+                        <div class="metric-sub" id="telNetworkSub">Unavailable</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value" id="telCpuValue">-- <span style="font-size: 1rem; font-weight: normal;">%</span></div>
+                        <div class="metric-sub" id="telRamValue">RAM: Unavailable</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Last Telemetry Timestamp</div>
+                        <div class="metric-value" id="telTimestampValue" style="font-size: 1rem; font-weight: normal;">--</div>
+                        <div class="metric-sub" id="telTimestampSub">Waiting for device report</div>
+                    </div>
+                </div>
+
+                <div id="telemetryUnavailableBox" class="notice-box warning">
+                    <strong>Status:</strong> <span id="telemetryUnavailableMessage">Select a paired device above to inspect telemetry. If the Android device has not yet reported telemetry, values will remain clearly marked as unavailable.</span>
+                </div>
+            </section>
+
+            <!-- TAB 5: TYPING LAB -->
+            <section id="tab-typing" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Typing Lab Sandbox</h2>
+                        <div class="section-subtitle">Dedicated biometric typing rhythm & keystroke dynamics evaluation arena</div>
+                    </div>
+                    <button id="btnResetTypingTest" class="btn btn-secondary btn-sm">↺ Reset Benchmark</button>
+                </div>
+
+                <div class="notice-box">
+                    <strong>Strict Security Boundary:</strong> Keystroke analytics operate exclusively within this dedicated sandbox arena. System-wide keylogging, password capture, and inter-application snooping are strictly prohibited by architecture.
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+                    <div>
+                        <div class="typing-box">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                                <span>TYPE THE FOLLOWING BENCHMARK TEXT:</span>
+                                <span>TIME REMAINING: <strong id="typingTimer">30s</strong></span>
+                            </div>
+                            <div id="typingBenchmarkPrompt" class="typing-prompt">
+                                The security of modern mobile systems depends on explicit authorization, verifiable encryption, and strict isolation between sandboxed applications.
+                            </div>
+                            <input id="typingTestInput" type="text" class="typing-input" placeholder="Click here and begin typing to start live biometric analytics..." autocomplete="off" spellcheck="false">
+                        </div>
+
+                        <div class="metrics-row">
+                            <div class="metric-card">
+                                <div class="metric-label">Speed</div>
+                                <div class="metric-value" id="liveTypingWpm">0.0 <span style="font-size: 0.9rem; font-weight: normal;">WPM</span></div>
+                            </div>
+                            <div class="metric-card emerald">
+                                <div class="metric-label">Accuracy</div>
+                                <div class="metric-value" id="liveTypingAccuracy">100 <span style="font-size: 0.9rem; font-weight: normal;">%</span></div>
+                            </div>
+                            <div class="metric-card amber">
+                                <div class="metric-label">Avg Flight Time</div>
+                                <div class="metric-value" id="liveTypingFlight">0 <span style="font-size: 0.9rem; font-weight: normal;">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Avg Hold Time</div>
+                                <div class="metric-value" id="liveTypingHold">0 <span style="font-size: 0.9rem; font-weight: normal;">ms</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Typing Statistics</div>
+                        <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div><strong>Keystrokes:</strong> <span id="statTotalKeys" style="font-family: var(--font-mono);">0</span></div>
+                            <div><strong>Correct Keys:</strong> <span id="statCorrectKeys" style="font-family: var(--font-mono); color: var(--accent-emerald);">0</span></div>
+                            <div><strong>Errors:</strong> <span id="statErrorKeys" style="font-family: var(--font-mono); color: var(--accent-rose);">0</span></div>
+                            <div><strong>Consistency Index:</strong> <span id="statConsistency">100%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-title">Device Benchmark Audit Log</div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Device ID</th>
+                                    <th>Prompt ID</th>
+                                    <th>WPM</th>
+                                    <th>Accuracy</th>
+                                    <th>Flight Time</th>
+                                    <th>Hold Time</th>
+                                    <th>Keystrokes / Errors</th>
+                                </tr>
+                            </thead>
+                            <tbody id="typingAuditLogBody">
+                                <tr>
+                                    <td colspan="8" class="empty-state">No typing benchmarks recorded yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: SECURITY EVENTS -->
+            <section id="tab-events" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Security Audit Log</h2>
+                        <div class="section-subtitle">Cryptographic pairing, session changes, and access revocation event stream</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select id="eventsFilterType" class="form-select" style="width: 180px;">
+                            <option value="">All Event Types</option>
+                            <option value="DEVICE_PAIRED">DEVICE_PAIRED</option>
+                            <option value="DEVICE_REVOKED">DEVICE_REVOKED</option>
+                            <option value="AGENT_CONNECTED">AGENT_CONNECTED</option>
+                            <option value="AGENT_DISCONNECTED">AGENT_DISCONNECTED</option>
+                            <option value="SESSION_STARTED">SESSION_STARTED</option>
+                            <option value="SESSION_STOPPED">SESSION_STOPPED</option>
+                        </select>
+                        <button id="btnRefreshEvents" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Device ID</th>
+                                    <th>Event Type</th>
+                                    <th>Session ID</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsFullTableBody">
+                                <tr>
+                                    <td colspan="7" class="empty-state">Loading audit events...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: REPORTS -->
+            <section id="tab-reports" class="tab-pane">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Audit Reports & Exports</h2>
+                        <div class="section-subtitle">Generate and export security telemetry and audit session logs</div>
+                    </div>
+                </div>
+
+                <div class="card" style="max-width: 600px;">
+                    <div class="card-title">Export Audit Events</div>
+                    <div class="form-group">
+                        <label class="form-label">Export Format</label>
+                        <select id="exportFormatSelect" class="form-select">
+                            <option value="json">JSON (Structured Audit Feed)</option>
+                            <option value="csv">CSV (Comma-Separated Spreadsheet)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Filter by Device (Optional)</label>
+                        <select id="exportDeviceSelect" class="form-select">
+                            <option value="">All Devices</option>
+                        </select>
+                    </div>
+                    <button id="btnDownloadExport" class="btn btn-primary" style="margin-top: 0.5rem;">⬇️ Download Audit Export</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Pair Device -->
+    <div id="pairModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700;">Pair New Android Device</h3>
+                <button class="modal-close" onclick="closeModal('pairModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Device Label</label>
+                <input id="pairDeviceNameInput" type="text" class="form-input" value="Authorized Android Device">
+            </div>
+            <button id="btnGeneratePin" class="btn btn-primary" style="width: 100%;">Generate 6-Digit PIN</button>
+
+            <div id="modalPinBox" style="display: none; margin-top: 1.25rem; text-align: center; background: var(--bg-base); border: 1px dashed var(--accent-blue); padding: 1.25rem; border-radius: var(--radius-md);">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">ENTER THIS PIN IN THE ANDROID AGENT:</div>
+                <div id="modalPinDisplay" style="font-family: var(--font-mono); font-size: 2.25rem; font-weight: 800; letter-spacing: 0.2em; color: var(--accent-blue);">------</div>
+                <div id="modalPinCountdown" style="font-size: 0.75rem; color: var(--accent-amber); margin-top: 0.5rem;">Valid for 5:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Device Details -->
+    <div id="deviceDetailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700;">Device Information</h3>
+                <button class="modal-close" onclick="closeModal('deviceDetailsModal')">&times;</button>
+            </div>
+            <div id="deviceDetailsContent" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
